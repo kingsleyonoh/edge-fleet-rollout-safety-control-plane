@@ -1,0 +1,82 @@
+# C++ / CMake / vcpkg
+build/
+out/
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+CTestTestfile.cmake
+Testing/
+compile_commands.json
+.vcpkg-root/
+vcpkg_installed/
+*.o
+*.obj
+*.a
+*.lib
+*.so
+*.dylib
+*.dll
+*.exe
+*.pdb
+*.ilk
+*.gcda
+*.gcno
+*.profraw
+*.profdata
+
+# Runtime data and generated evidence
+data/
+local-secrets/
+logs/
+tmp/
+coverage/
+playwright-report/
+test-results/
+.pi/browser/
+.pi/agents/
+tools/klevar-pi-package/
+
+# Environment and secrets
+.env
+.env.local
+.env.*.local
+.env.production
+!.env.example
+
+# Editors and operating systems
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# AI Workflow System (proprietary, do not publish)
+# TRACKED DURING DEV. Run /prepare-public before making repo public.
+# .agent/workflows/
+# .agent/guides/
+# .agent/agents/
+.agent/.last-sync
+
+# Internal project planning
+# TRACKED DURING DEV. Run /prepare-public before making repo public.
+# docs/progress.md
+# docs/build-journal.md
+# docs/build-journal/
+docs/architect_journal.md
+# docs/*PRD*.md
+# docs/*prd*.md
+
+# Multi-agent platform context
+# CLAUDE.md / AGENTS.md / .cursorrules are generated thin pointers.
+CLAUDE.md
+AGENTS.md
+.cursorrules
+# TRACKED DURING DEV. Run /prepare-public before making repo public.
+# .claude/
+.claude/settings.local.json
+.claude/projects/
+.claude/ide/
+.claude/shell-snapshots/
+.claude/todos/
+.claude/statsig/
