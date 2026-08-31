@@ -1,0 +1,254 @@
+openapi: "3.1.0"
+info:
+  title: Edge Fleet Rollout Safety Control Plane API
+  version: "0.1.0"
+  description: Tenant-scoped API for signed artifacts, deterministic staged rollout, device desired and observed state, health gates, simulation, replay, evidence, and optional adapters.
+  contact:
+    name: Kingsley Onoh
+    url: https://kingsleyonoh.com
+servers:
+  - url: http://localhost:8080
+    description: Standalone development
+security:
+  - OperatorApiKey: []
+paths:
+  /api/tenants/register:
+    post: {summary: Register a tenant when enabled, security: [], responses: {"201": {description: Tenant and one-time API key}, "403": {description: Registration disabled}}}
+  /api/tenants/me:
+    get: {summary: Get current tenant and credential role, responses: {"200": {description: Tenant profile}}}
+    patch: {summary: Update tenant identity, responses: {"200": {description: Updated tenant}}}
+  /api/credentials:
+    get: {summary: List operator credentials, responses: {"200": {description: Credential page}}}
+    post: {summary: Create an operator credential, responses: {"201": {description: Metadata and raw key once}}}
+  /api/credentials/{id}/revoke:
+    post: {summary: Revoke an operator credential, responses: {"200": {description: Revoked credential}}}
+  /api/credentials/{id}/rotate:
+    post: {summary: Rotate an operator credential, responses: {"200": {description: Metadata and raw key once}}}
+  /auth/session:
+    post: {summary: Exchange API key for browser session, security: [], responses: {"204": {description: Session created}}}
+    delete: {summary: End browser session, security: [{BrowserSession: []}], responses: {"204": {description: Session ended}}}
+  /api/fleets:
+    get: {summary: List fleets, responses: {"200": {description: Fleet page}}}
+    post: {summary: Create a fleet, responses: {"201": {description: Fleet}}}
+  /api/fleets/{id}:
+    get: {summary: Get fleet, responses: {"200": {description: Fleet summary}}}
+    patch: {summary: Update fleet, responses: {"200": {description: Fleet}}}
+  /api/fleets/{id}/pause:
+    post: {summary: Pause fleet, responses: {"200": {description: Paused fleet}}}
+  /api/fleets/{id}/retire:
+    post: {summary: Retire fleet, responses: {"200": {description: Retired fleet}}}
+  /api/fleets/{id}/devices:
+    post: {summary: Register device, responses: {"201": {description: Device and one-time provisioning secret}}}
+  /api/devices:
+    get: {summary: List devices, responses: {"200": {description: Device page}}}
+  /api/devices/{id}:
+    get: {summary: Get device, responses: {"200": {description: Device, reports, and assignments}}}
+    patch: {summary: Update device labels and display name, responses: {"200": {description: Device}}}
+  /api/devices/{id}/quarantine:
+    post: {summary: Quarantine device, responses: {"200": {description: Device}}}
+  /api/devices/{id}/reactivate:
+    post: {summary: Reactivate device, responses: {"200": {description: Device}}}
+  /api/devices/{id}/decommission:
+    post: {summary: Decommission device, responses: {"200": {description: Device}}}
+  /api/devices/{id}/credentials/rotate:
+    post: {summary: Rotate device credential, responses: {"200": {description: One-time provisioning secret}}}
+  /api/artifact-signing-keys:
+    get: {summary: List artifact signing keys, responses: {"200": {description: Redacted key metadata}}}
+    post: {summary: Register artifact signing public key, responses: {"201": {description: Key metadata}}}
+  /api/artifact-signing-keys/{id}/retire:
+    post: {summary: Retire artifact signing key, responses: {"200": {description: Retired key}}}
+  /api/artifact-signing-keys/{id}/compromise:
+    post: {summary: Mark key compromised and report affected releases, responses: {"200": {description: Compromise report}}}
+  /api/artifacts:
+    get: {summary: List artifacts, responses: {"200": {description: Artifact page}}}
+    post: {summary: Stream artifact upload, responses: {"201": {description: Uploading artifact}}}
+  /api/artifacts/{id}:
+    get: {summary: Get artifact metadata, responses: {"200": {description: Artifact and references}}}
+  /api/artifacts/{id}/validate:
+    post: {summary: Validate artifact bytes, manifest, compatibility, and signature, responses: {"200": {description: Validation result}}}
+  /api/artifacts/{id}/retire:
+    post: {summary: Retire artifact for new releases, responses: {"200": {description: Retired artifact}}}
+  /api/artifacts/{id}/download:
+    get: {summary: Download artifact as authorized operator, responses: {"200": {description: Binary stream}}}
+  /api/policies:
+    get: {summary: List rollout policies, responses: {"200": {description: Policy page}}}
+    post: {summary: Create fixed-wave policy draft, responses: {"201": {description: Draft policy}}}
+  /api/policies/{id}:
+    get: {summary: Get policy and versions, responses: {"200": {description: Policy}}}
+    patch: {summary: Update policy draft, responses: {"200": {description: Draft policy}}}
+  /api/policies/{id}/validate:
+    post: {summary: Validate fixed waves and hard gates, responses: {"200": {description: Validation report}}}
+  /api/policies/{id}/activate:
+    post: {summary: Activate policy version, responses: {"200": {description: Active policy}}}
+  /api/policies/{id}/archive:
+    post: {summary: Archive policy, responses: {"200": {description: Archived policy}}}
+  /api/releases:
+    get: {summary: List releases, responses: {"200": {description: Release page}}}
+    post: {summary: Create release draft, responses: {"201": {description: Draft release}}}
+  /api/releases/{id}:
+    get: {summary: Get release, stages, gates, and counts, responses: {"200": {description: Release projection}}}
+    patch: {summary: Update release draft, responses: {"200": {description: Draft release}}}
+  /api/releases/{id}/validate:
+    post: {summary: Freeze and validate release, responses: {"200": {description: Validation report}}}
+  /api/releases/{id}/membership:
+    get: {summary: List frozen release membership, responses: {"200": {description: Member page}}}
+  /api/releases/{id}/submit:
+    post: {summary: Submit release for start approval, responses: {"200": {description: Approval request or ready release}}}
+  /api/releases/{id}/schedule:
+    post: {summary: Schedule approved release, responses: {"200": {description: Scheduled release}, "409": {description: Approval required or version conflict}}}
+  /api/releases/{id}/start:
+    post: {summary: Start release or request approval, responses: {"200": {description: Running release or approval request}}}
+  /api/releases/{id}/cancel:
+    post: {summary: Cancel before running, responses: {"200": {description: Cancelled release}}}
+  /api/releases/{id}/pause:
+    post: {summary: Pause release, responses: {"200": {description: Paused release}}}
+  /api/releases/{id}/resume:
+    post: {summary: Resume release or request approval, responses: {"200": {description: Running release or approval request}}}
+  /api/releases/{id}/abort:
+    post: {summary: Abort release or request approval, responses: {"200": {description: Aborting release or approval request}}}
+  /api/releases/{id}/rollback:
+    post: {summary: Roll back release or request approval, responses: {"200": {description: Rolling-back release or approval request}}}
+  /api/releases/{id}/gates:
+    get: {summary: List immutable gate evaluations, responses: {"200": {description: Evaluation page}}}
+  /api/releases/{id}/gates/{evaluation_id}/override:
+    post: {summary: Request evaluation-bound gate override, responses: {"201": {description: Two-person approval request}}}
+  /api/releases/{id}/assignments:
+    get: {summary: List release assignments, responses: {"200": {description: Assignment page}}}
+  /api/approvals:
+    get: {summary: List approval requests, responses: {"200": {description: Approval page}}}
+  /api/approvals/{id}/approve:
+    post: {summary: Approve and atomically execute captured action when applicable, responses: {"200": {description: Approval and resulting state}}}
+  /api/approvals/{id}/reject:
+    post: {summary: Reject approval request, responses: {"200": {description: Rejected request}}}
+  /api/agent/v1/desired-state:
+    get: {summary: Poll latest valid desired-state command, security: [{DeviceHmac: []}], responses: {"200": {description: Command}, "204": {description: No command}}}
+  /api/agent/v1/artifacts/{digest}:
+    get: {summary: Download exact assigned artifact digest, security: [{DeviceHmac: []}], responses: {"200": {description: Binary stream}}}
+  /api/agent/v1/reports:
+    post: {summary: Submit signed immutable device report, security: [{DeviceHmac: []}], responses: {"202": {description: Accepted or idempotent result}, "409": {description: Conflicting identifier or sequence}}}
+  /api/agent/v1/credential-rotation/ack:
+    post: {summary: Acknowledge successor device credential, security: [{DeviceHmac: []}], responses: {"202": {description: Accepted}}}
+  /api/simulations:
+    get: {summary: List simulations, responses: {"200": {description: Simulation page}}}
+    post: {summary: Queue deterministic simulation, responses: {"202": {description: Queued run}}}
+  /api/simulations/{id}:
+    get: {summary: Get simulation input and result, responses: {"200": {description: Simulation run}}}
+  /api/simulations/{id}/cancel:
+    post: {summary: Cancel bounded simulation, responses: {"200": {description: Cancelled run}}}
+  /api/simulations/{id}/replay:
+    post: {summary: Queue replay from simulation trace, responses: {"202": {description: Queued replay}}}
+  /api/benchmarks:
+    get: {summary: List benchmark parents, responses: {"200": {description: Benchmark page}}}
+    post: {summary: Queue versioned benchmark corpus, responses: {"202": {description: Queued benchmark}}}
+  /api/benchmarks/{id}:
+    get: {summary: Get complete strategy comparison, responses: {"200": {description: Benchmark parent and result cells}}}
+  /api/releases/{id}/replays:
+    post: {summary: Queue replay from frozen evidence range, responses: {"202": {description: Queued replay}}}
+  /api/replays/{id}:
+    get: {summary: Get reproduction digest and first divergence, responses: {"200": {description: Replay result}}}
+  /api/evidence:
+    get: {summary: List tenant hash-chained evidence, responses: {"200": {description: Evidence page}}}
+  /api/evidence/verify:
+    post: {summary: Verify tenant evidence chain, responses: {"200": {description: Verification result}}}
+  /api/evidence/exports:
+    post: {summary: Queue immutable bounded evidence export, responses: {"202": {description: Queued export}}}
+  /api/evidence/exports/{id}:
+    get: {summary: Get evidence export status and manifest, responses: {"200": {description: Export status}}}
+  /api/evidence/exports/{id}/download:
+    get: {summary: Download completed evidence package, responses: {"200": {description: NDJSON package}}}
+  /api/notices:
+    get: {summary: List local operator notices, responses: {"200": {description: Notice page}}}
+  /api/notices/{id}/acknowledge:
+    post: {summary: Acknowledge local notice, responses: {"200": {description: Acknowledged notice}}}
+  /api/integrations:
+    get: {summary: List redacted adapter states, responses: {"200": {description: Adapter states}}}
+  /api/integrations/{adapter}:
+    put: {summary: Configure supported disabled adapter, responses: {"200": {description: Adapter config}}}
+  /api/integrations/{adapter}/test:
+    post: {summary: Test adapter connection, responses: {"200": {description: Test result}}}
+  /api/integrations/{adapter}/enable:
+    post: {summary: Enable tested adapter, responses: {"200": {description: Enabled adapter}}}
+  /api/integrations/{adapter}/disable:
+    post: {summary: Disable adapter or request approval when safety requires it, responses: {"200": {description: Disabled adapter or approval request}}}
+  /api/outbox:
+    get: {summary: List redacted outbox deliveries, responses: {"200": {description: Delivery page}}}
+  /api/outbox/{id}/retry:
+    post: {summary: Explicitly retry eligible dead-lettered delivery, responses: {"200": {description: Pending delivery}}}
+  /health:
+    get: {summary: Process liveness, security: [], responses: {"200": {description: Live}}}
+  /health/ready:
+    get: {summary: Core readiness, security: [], responses: {"200": {description: Ready}, "503": {description: Core dependency unavailable}}}
+  /metrics:
+    get: {summary: Prometheus metrics, security: [], responses: {"200": {description: Prometheus text}}}
+components:
+  securitySchemes:
+    OperatorApiKey:
+      type: apiKey
+      in: header
+      name: X-API-Key
+    BrowserSession:
+      type: apiKey
+      in: cookie
+      name: edgefleet_session
+    DeviceHmac:
+      type: apiKey
+      in: header
+      name: X-Device-Signature
+  schemas:
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [code, message, trace_id]
+          properties:
+            code: {type: string}
+            message: {type: string}
+            details: {type: array, items: {type: object}}
+            trace_id: {type: string}
+    Id:
+      type: string
+      minLength: 1
+    Page:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items: {type: object}
+        next_cursor: {type: string, nullable: true}
+    MutationEnvelope:
+      type: object
+      additionalProperties: true
+      properties:
+        id: {$ref: '#/components/schemas/Id'}
+        status: {type: string}
+        evidence_digest: {type: string}
+    DeviceReport:
+      type: object
+      required: [report_id, report_sequence, report_type, observed_generation]
+      properties:
+        report_id: {$ref: '#/components/schemas/Id'}
+        report_sequence: {type: integer, minimum: 1}
+        report_type: {type: string}
+        observed_generation: {type: integer, minimum: 0}
+        observed_artifact_digest: {type: string}
+        health: {type: object, additionalProperties: {type: number}}
+    Artifact:
+      type: object
+      required: [id, name, version, status, sha256_digest]
+      properties:
+        id: {$ref: '#/components/schemas/Id'}
+        name: {type: string}
+        version: {type: string}
+        status: {type: string, enum: [uploading, validating, ready, blocked, retired]}
+        sha256_digest: {type: string, pattern: '^[0-9a-f]{64}$'}
+    Release:
+      type: object
+      required: [id, status, version]
+      properties:
+        id: {$ref: '#/components/schemas/Id'}
+        status: {type: string}
+        version: {type: integer, minimum: 1}
+        membership_digest: {type: string}

@@ -11,9 +11,9 @@
 ## How to add a new gotcha
 
 1. Filename pattern: `YYYY-MM-DD-short-slug.md` (date of discovery + kebab-case slug).
-2. Use the Symptom / Cause / Solution / Discovered in / Affects shape from `EXAMPLE.md` — matches `knowledge/gotchas-by-stack/` format so entries promote cleanly via `/harvest-gotchas`.
+2. Copy the shape from `EXAMPLE.md`. Record the observed symptom, verified cause, tested solution, discovery context, affected paths or versions, and the evidence that supports the entry.
 3. Add one row to the `## Catalog` table above.
-4. If the gotcha is cross-project (would bite other projects on the same stack), queue it for harvest.
+4. If the gotcha could affect other projects on the same stack, state that scope in the sibling file. Promotion outside this repository requires a separate review of the recorded evidence.
 
 ## Why directory-per-kind
 

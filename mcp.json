@@ -1,0 +1,30 @@
+{
+  "name": "edge-fleet-rollout-safety-control-plane",
+  "version": "0.1.0",
+  "description": "MCP discovery metadata for tenant-scoped fleet rollout safety operations.",
+  "transport": "stdio",
+  "baseUrl": "http://localhost:8080",
+  "authentication": {
+    "type": "apiKey",
+    "header": "X-API-Key",
+    "environmentVariable": "EDGEFLEET_OPERATOR_API_KEY"
+  },
+  "tools": [
+    {"name": "get_current_tenant", "method": "GET", "path": "/api/tenants/me", "description": "Read the authenticated tenant and role."},
+    {"name": "list_fleets", "method": "GET", "path": "/api/fleets", "description": "List tenant fleets."},
+    {"name": "list_devices", "method": "GET", "path": "/api/devices", "description": "List tenant devices and filter by fleet or state."},
+    {"name": "list_artifacts", "method": "GET", "path": "/api/artifacts", "description": "List signed artifact metadata."},
+    {"name": "list_policies", "method": "GET", "path": "/api/policies", "description": "List fixed-wave rollout policies."},
+    {"name": "get_release", "method": "GET", "path": "/api/releases/{id}", "description": "Read release state, stages, gates, and counts."},
+    {"name": "validate_release", "method": "POST", "path": "/api/releases/{id}/validate", "description": "Freeze and validate a release draft. Requires Idempotency-Key."},
+    {"name": "pause_release", "method": "POST", "path": "/api/releases/{id}/pause", "description": "Request a version-guarded release pause."},
+    {"name": "request_rollback", "method": "POST", "path": "/api/releases/{id}/rollback", "description": "Request rollback through local approval and state-machine rules."},
+    {"name": "list_approvals", "method": "GET", "path": "/api/approvals", "description": "List pending and decided safety approvals."},
+    {"name": "run_simulation", "method": "POST", "path": "/api/simulations", "description": "Queue a deterministic scenario and seed."},
+    {"name": "get_benchmark", "method": "GET", "path": "/api/benchmarks/{id}", "description": "Read a complete benchmark strategy comparison."},
+    {"name": "verify_evidence", "method": "POST", "path": "/api/evidence/verify", "description": "Verify a tenant evidence range."},
+    {"name": "export_evidence", "method": "POST", "path": "/api/evidence/exports", "description": "Queue an immutable bounded evidence export."},
+    {"name": "list_notices", "method": "GET", "path": "/api/notices", "description": "List tenant-local operator notices."},
+    {"name": "list_integrations", "method": "GET", "path": "/api/integrations", "description": "Read redacted optional-adapter state."}
+  ]
+}

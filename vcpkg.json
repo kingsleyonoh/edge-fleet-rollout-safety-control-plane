@@ -1,0 +1,24 @@
+{
+  "name": "edge-fleet-rollout-safety-control-plane",
+  "version-string": "1.0.0",
+  "builtin-baseline": "114d9fe62faf35856b45cf55cb93b57028a45d63",
+  "dependencies": [
+    "argon2",
+    "catch2",
+    "nlohmann-json",
+    "openssl",
+    "spdlog",
+    "sqlite3",
+    "duckdb"
+  ],
+  "features": {
+    "full-runtime": {
+      "description": "Optional native HTTP and analytical benchmark dependencies",
+      "dependencies": ["drogon", "duckdb"]
+    },
+    "postgres": {
+      "description": "PostgreSQL production storage adapter",
+      "dependencies": ["libpq"]
+    }
+  }
+}

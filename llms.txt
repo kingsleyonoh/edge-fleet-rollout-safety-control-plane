@@ -1,0 +1,59 @@
+# Edge Fleet Rollout Safety Control Plane
+
+> A tenant-scoped C++ control plane that promotes software or configuration releases only after intermittently connected devices prove healthy convergence.
+
+## What this does
+
+The service freezes release membership, signed artifact manifests, rollback bytes, fixed rollout waves, and safety policy. Devices pull durable commands and report observed generation and digest. The control plane evaluates fresh evidence, pauses or rolls back unsafe stages, and preserves every decision in a tenant hash chain. Deterministic simulation, benchmark, evidence verification, and replay run on one machine.
+
+## Who this is for
+
+VP Platform, Head of IoT Operations, and Fleet Reliability teams that need auditable staged rollout across unreliable connected devices.
+
+## Quick start
+
+1. Clone: `git clone https://github.com/kingsleyonoh/edge-fleet-rollout-safety-control-plane.git`
+2. Install dependencies through the pinned `vcpkg.json` manifest.
+3. Configure: `cmake --preset dev`
+4. Build: `cmake --build --preset dev -j 2`
+5. Test: `ctest --preset dev --output-on-failure`
+6. Setup: `build/dev/edgefleet setup`
+7. Run: `build/dev/edgefleet serve`
+
+The Docker-free acceptance path also runs `ctest --preset dev --output-on-failure`; browser verification uses `npm ci` followed by `npm run test:e2e -- --workers=1 --project=chromium --project=mobile`. The current evidence ledger and exact fixture results live in `docs/progress.md` and the directory-based `docs/build-journal/`.
+
+## Architecture
+
+C++23 domain and application modules sit behind dialect-neutral storage and external-adapter ports. SQLite WAL and local artifacts are the standalone default; the PostgreSQL 16 adapter uses the same storage boundary for production. The standalone HTTP server handles REST, device polling, CSP pages, and the server-rendered console without requiring an external runtime. DuckDB is an optional benchmark-analysis dependency and never owns operational truth. Optional IoT, Notification Hub, and Workflow adapters default off and never own release authority.
+
+## API surface
+
+- Tenant registration, profile, operator credentials, and browser sessions
+- Fleets, devices, one-time provisioning, credential rotation, and quarantine
+- Artifact signing keys, streamed artifact validation, and authorized downloads
+- Fixed-wave policies, release freeze/validate/control, gates, assignments, and approvals
+- Device desired state, assigned artifact, signed reports, and rotation acknowledgement
+- Deterministic simulation, 108-cell benchmark corpus, evidence replay, and divergence
+- Hash-chain verification, immutable evidence export, notices, adapters, and outbox inspection
+- `/health`, `/health/ready`, and loopback Prometheus metrics
+
+See `openapi.yaml` for the public method/path contract and the shared error, page, artifact, release, and device-report schemas. All mutating API calls use `Idempotency-Key` except tenant registration and device reports.
+
+## Integrations
+
+- IoT Sensor Data Aggregator, optional read-only health evidence
+- Event-Driven Notification Hub, optional frozen-event delivery with local-notice fallback
+- Workflow Automation Engine, optional playbook start and observation with no release mutation authority
+
+## Binding constraints
+
+Every data path is tenant-scoped. Observed generation plus artifact digest proves convergence. Frozen inputs make cohort, gate, simulator, and replay decisions deterministic. Duplicate and out-of-order device messages cannot corrupt projections. Commands, reports, evaluations, approvals, and evidence are immutable. Docker and external portfolio services are not core prerequisites.
+
+## Source
+
+- Repository: https://github.com/kingsleyonoh/edge-fleet-rollout-safety-control-plane.git
+- PRD: `docs/edge-fleet-rollout-safety-control-plane_prd.md`
+- Progress: `docs/progress.md`
+- Agent context: `AGENTS.md`
+- API spec: `openapi.yaml`
+- MCP metadata: `mcp.json`

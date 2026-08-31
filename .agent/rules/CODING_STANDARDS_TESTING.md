@@ -9,7 +9,7 @@
 - **NEVER modify a test to make it pass.** Fix the IMPLEMENTATION, not the test.
 - **NEVER use `pass` or empty test bodies.**
 - **NEVER hardcode return values** just to satisfy a test.
-- **NEVER hardcode tenant-identity literals in templates/emails/invoices** just to make a template test pass. If `{{entity.X}}` doesn't resolve, extend the schema or escalate — never inline the literal. See `CODING_STANDARDS.md` — "No Silent Workarounds" and `CODING_STANDARDS_DOMAIN.md` — "Multi-Tenant Config-Driven Surfaces."
+- **NEVER hardcode tenant-identity literals in templates/emails/invoices** just to make a template test pass. If a required tenant template token does not resolve, extend the schema or escalate — never inline the literal. See `CODING_STANDARDS.md` — "No Silent Workarounds" and `CODING_STANDARDS_DOMAIN.md` — "Multi-Tenant Config-Driven Surfaces."
 - **NEVER use broad exception handlers** to swallow errors that would make tests fail.
 - **NEVER mock the thing being tested.** Only mock external dependencies.
 - **NEVER skip or mark tests as expected failures** without explicit user approval.
@@ -45,7 +45,7 @@
 - **Why:** happy-path-only coverage misses the entire failure surface. Production rarely fails in the happy path — it fails when input is malformed, the network drops, the DB is locked, the user double-clicks. The bugs you ship are always in the unhappy paths you didn't test.
 - **No fixed count threshold** — "1 unhappy path per happy path" is the floor, not a ceiling. Surfaces with multiple failure modes need multiple companions. Surfaces without meaningful unhappy paths (pure constants, type definitions, trivial getters) are exempt — but document the exemption in the test file's header so a reviewer can audit it.
 
-### Strictest-Validation-Default (CONDITIONAL — applies when validation tiers exist)
+### Strictest validation default when tiers exist
 - **When a feature has multiple validation strictness levels, tests default to the STRICTEST tier.** Examples: XML schema profiles (multiple compliance levels), JSON Schema strict-vs-lenient modes, parser strictness flags, ESLint severity tiers, PDF compliance levels (PDF/A-1 vs A-2 vs A-3), email RFC-strictness modes.
 - **Lenient tiers are explicit secondary tests** with a documented justification — "test against tier-N because production uses tier-N for this surface." Without that documentation, default to strictest.
 - **Why:** lenient-tier tests produce false GREEN. Code that passes the lenient validator can still fail the strict one — and production often runs strict (regulatory compliance, downstream consumer requirements, security profiles). When the tier flips, the latent failures all surface at once.

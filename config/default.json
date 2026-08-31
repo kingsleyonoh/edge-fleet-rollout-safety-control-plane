@@ -1,0 +1,19 @@
+{
+  "schema_version": "v1",
+  "environment": "development",
+  "stage_percentages": [1, 5, 20, 50, 100],
+  "min_observation_seconds": 900,
+  "telemetry_freshness_seconds": 120,
+  "convergence_target": 0.98,
+  "max_offline_fraction": 0.2,
+  "artifact_max_bytes": 104857600,
+  "artifact_min_free_bytes": 2147483648,
+  "simulator_max_devices": 100000,
+  "simulator_max_events": 10000000,
+  "replay_checkpoint_interval": 10000,
+  "integrations": {
+    "iot_rest_v1": {"enabled": false, "required_for_promotion": false, "fixture_mode": true},
+    "notification_hub_v1": {"enabled": false, "fixture_mode": true},
+    "workflow_manual_v1": {"enabled": false, "fixture_mode": true}
+  }
+}

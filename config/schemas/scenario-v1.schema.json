@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": ["schema_version", "scenario_name", "device_count", "duration_seconds"],
+  "properties": {
+    "schema_version": {"const": "v1"},
+    "scenario_name": {"type": "string", "minLength": 1},
+    "device_count": {"type": "integer", "minimum": 1, "maximum": 1000000},
+    "duration_seconds": {"type": "integer", "minimum": 1},
+    "failure_probability": {"type": "number", "minimum": 0, "maximum": 1},
+    "health_failure_probability": {"type": "number", "minimum": 0, "maximum": 1},
+    "online_probability": {"type": "number", "minimum": 0, "maximum": 1},
+    "message_loss_probability": {"type": "number", "minimum": 0, "maximum": 1},
+    "message_duplication_probability": {"type": "number", "minimum": 0, "maximum": 1},
+    "message_reorder_probability": {"type": "number", "minimum": 0, "maximum": 1},
+    "rollback_success_probability": {"type": "number", "minimum": 0, "maximum": 1},
+    "device_restart_probability": {"type": "number", "minimum": 0, "maximum": 1},
+    "control_plane_restart_probability": {"type": "number", "minimum": 0, "maximum": 1},
+    "database_outage_probability": {"type": "number", "minimum": 0, "maximum": 1},
+    "iot_adapter_outage_probability": {"type": "number", "minimum": 0, "maximum": 1},
+    "mean_offline_duration_seconds": {"type": "integer", "minimum": 1}
+  },
+  "additionalProperties": false
+}

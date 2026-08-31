@@ -1,144 +1,67 @@
-# Edge Fleet Rollout Safety Control Plane — Coding Standards: Live & Integration Testing
+# Edge Fleet Rollout Safety Control Plane — Live and Integration Testing
 
-> Part 4 of 5. Related core/meta/testing/E2E/domain rules exist; load them only when the task touches those surfaces.
-> This file covers the mock policy, component testing, and in-process backend integration testing. E2E testing lives in `CODING_STANDARDS_TESTING_E2E.md`.
+> Covers real local dependencies, Drogon in-process integration, server-rendered UI components, and adapter fixtures. Real-network E2E is in `CODING_STANDARDS_TESTING_E2E.md`.
 
-## Live Integration Testing (Mock Policy)
+## Do not mock what the project owns
 
-### The Rule: Don't Mock What You Own
-If you control the service and can run it locally → test against the real thing.
+Standalone tests use real SQLite in WAL mode, real filesystem artifact storage, production migrations, production parsers, and production application services. Do not replace them with fake repositories, alternate schemas, test-only seeders, or simplified binaries.
 
-### Service Fallback Hierarchy
-When deciding how to test a service, follow this order:
-1. **Local instance** (best) — Docker, CLI, emulator on your machine
-2. **Cloud dev instance** (good) — dedicated test project / staging environment
-3. **Mock** (last resort) — only when options 1 and 2 are impossible
+The standalone core has no external service. Optional adapters default off. Recorded HTTP fixtures are allowed for IoT, Notification Hub, and Workflow Engine because those services are outside this repository. Opt-in live contract checks require explicit test flags and non-production credentials.
 
-### Test LIVE (Never Mock)
-- Your database ({{LOCAL_SERVICES}}) — validates schema, column names, constraints, query behavior
-- Your own API endpoints — call the actual route, not a stub
-- Your own server actions / business logic — test the real function
-- File storage you control (local filesystem, local object storage)
+## Test tiers
 
-### Mock ONLY These
-- Third-party payment APIs (Stripe charges money)
-- Email/SMS delivery (SendGrid/Twilio sends messages)
-- Rate-limited external APIs you don't control
-- Services with irreversible side effects
-- Cloud-only services with no local emulator AND no dev tier
+- Unit: `build/dev/tests/edgefleet_tests "[unit]"`
+- Component: `build/dev/tests/edgefleet_tests "[component]"`
+- Full unit, component, contract, and integration suite: `ctest --preset dev --output-on-failure`
+- Real-network E2E: `npm ci && npx playwright test`
 
-### No Services? No Problem
-If the project has no external services (CLI tool, library, static site), this policy doesn't apply — just write standard unit tests.
+Tests derive fixtures from versioned migrations, schemas, scenario manifests, and production setup paths. A test must not define a parallel contract.
 
-### Why This Matters
-A mock that returns `{ user_id: 1 }` will pass even when the real column is `userId`. A mock that returns success will pass even when the real constraint rejects your data. Mocks test your ASSUMPTIONS about the service. Live tests test REALITY.
+## Drogon API integration
 
-### Common Mock Violations (DO NOT DO THESE)
-- ❌ Mocking your database client to return fake rows — hit the real database
-- ❌ Mocking your own API routes with `nock`/`msw` — call the real endpoint via test client
-- ❌ Using an in-memory SQLite when production uses PostgreSQL — use the real PostgreSQL
-- ❌ Mocking Redis/cache when it's running in Docker — connect to the real instance
-- ✅ Mocking Stripe's charge API — you don't want to charge real money in tests
-- ✅ Mocking SendGrid — you don't want to send real emails in tests
-- ✅ Mocking an external API with rate limits — you don't control their uptime
+Every endpoint, middleware, controller, application service, job handler, and device protocol route needs production-path integration coverage.
 
-### Test Cleanup
-- Each test MUST clean up after itself (delete rows, reset state)
-- Use transactions with rollback when possible for speed
+Assert:
 
-<!-- CONDITIONAL: FRONTEND_FRAMEWORK=React — Bootstrap Step 5c: KEEP this section for React frontend projects, REMOVE for backend-only -->
-## Component Testing (React Testing Library)
+1. request method, route, body, headers, and closed-schema validation;
+2. authentication and exact role permission;
+3. tenant filter and cross-tenant 404 behavior;
+4. status, response schema, security headers, and safe error format;
+5. database, artifact, command, outbox, notice, and evidence effects in one transaction;
+6. idempotency, optimistic conflict, duplicate, reorder, and failure paths;
+7. no secret, SQL, raw adapter body, or filesystem path leaks.
 
-> This section applies to projects with a React frontend. If the project has no UI, skip this section entirely.
+Use Drogon's test facilities against the real handler stack for fast integration. Real HTTP remains a separate E2E requirement.
 
-### When to Write Component Tests
-- Every **interactive component**: forms, dialogs, accordions, dropdowns, buttons with click handlers
-- Every component with **conditional rendering** (show/hide logic, loading states, error states)
-- Any component where a bug would **block user interaction** (can't type, can't click, can't submit)
-- **Not required for**: pure display components with no interactivity (static text, icons, layout wrappers)
+## Server-rendered UI integration
 
-### What to Test
-| Priority | Test This | Example |
-|----------|-----------|---------|
-| 1 | User interactions | Click button → dialog opens; type in input → value updates |
-| 2 | Conditional rendering | Error state shows message; loading state shows spinner |
-| 3 | Form validation feedback | Submit empty form → validation errors appear |
-| 4 | Accessible roles & labels | Button has correct label; form inputs are labeled |
-| 5 | Callback invocation | onSubmit called with correct data; onCancel fires |
+Drogon CSP and HTMX tests render through production controllers and typed template contexts. Test full pages and fragments for:
 
-### What NOT to Test
-- **Styling** — don't assert on classNames, colors, or CSS
-- **Internal state** — don't reach into `useState` values; test what the USER sees
-- **Snapshot tests** — they create noise and break on every minor change. Test behavior instead.
-- **Implementation details** — don't test that a specific hook was called; test the outcome
+- loading, empty, error, conflict, stale evidence, adapter unavailable, denied, paused, rollback, and completed states;
+- role-visible controls based on the shared backend `PolicyDecision`;
+- two-tenant literal exclusion;
+- strict missing-token failure;
+- table headers, labels, status text, focus targets, CSRF, CSP, and no inline script;
+- fragment size under 100 KiB and safe polling behavior.
 
-### RTL Query Priority (follow this order)
-1. `getByRole` — accessible role (button, textbox, dialog) — **always prefer this**
-2. `getByLabelText` — form inputs with labels
-3. `getByText` — visible text content
-4. `getByPlaceholderText` — placeholder fallback
-5. `getByTestId` — **last resort only** — used when no semantic query works
+Do not snapshot large HTML trees. Assert semantic roles, labels, text, links, forms, hidden sensitive values, and canonical state.
 
-### RTL Best Practices
-- Use `userEvent` over `fireEvent` — it simulates real browser behavior (focus, blur, keyboard)
-- Use `screen` for queries — not destructured render result
-- Use `waitFor` for async operations — never `setTimeout`
-- Use `within` to scope queries inside a container (e.g., within a specific dialog)
-- Wrap state updates in `act()` only if React warns you — RTL handles this automatically in most cases
+## Adapter contract fixtures
 
-### File Naming & Location
-- Name: `ComponentName.test.tsx` — co-located next to the component file
-- Example: `src/components/ProductFormDialog.test.tsx`
-- Group test utilities in `src/test/helpers.ts` if shared across component tests
+Each supported adapter has success, timeout, 401, 403, 429 where applicable, malformed JSON, stale data, redirect, TLS, disabled, and exhaustion fixtures under `tests/fixtures/`.
 
-### Minimum Coverage Rule
-Every interactive React component MUST have at least:
-- **1 happy-path interaction test** (user performs the primary action successfully)
-- **1 error/edge-case test** (empty submission, missing data, disabled state)
-- If a component has 0 tests and it has click/type/submit handlers → it's a bug waiting to happen
+Contract tests prove:
 
-### Setup (Vitest + jsdom)
-Component tests run in Node.js with a simulated DOM — no browser needed. Typical setup:
-- `vitest` as test runner (or `jest` if the project already uses it)
-- `@testing-library/react` for component rendering and queries
-- `@testing-library/user-event` for simulating user interactions
-- `jsdom` or `happy-dom` as the test environment
-- Configure in `vitest.config.ts`: `environment: 'jsdom'`
-<!-- END CONDITIONAL: FRONTEND_FRAMEWORK=React -->
+- `iot_rest_v1` reads only and cannot mutate release state;
+- `notification_hub_v1` emits frozen idempotent events and retains local notices;
+- `workflow_manual_v1` starts and observes playbooks but has no release authority;
+- unknown adapter values fail before an adapter exists;
+- disabled adapters leave the standalone acceptance suite green.
 
-<!-- CONDITIONAL: BACKEND_ONLY — Bootstrap Step 5c: KEEP this section for backend-only projects (API, CLI, worker), REMOVE for React frontend -->
-## Backend API & Integration Testing
+## Cleanup and isolation
 
-> This section applies to backend-only projects (APIs, workers, CLI tools). If the project has a React frontend, use the Component Testing section above instead.
-> **Note:** This is in-process integration testing (test client like `inject()` or `supertest`). For real-HTTP testing over the network, see `CODING_STANDARDS_TESTING_E2E.md`.
+Each test owns a temporary database and artifact root, or uses a transaction/fixture that leaves no shared state. Tests can run alone and in shuffled order. Two-tenant fixtures are mandatory whenever tenant-owned data appears. Do not use production data or credentials.
 
-### When to Write API Integration Tests
-- Every **API endpoint**: test request → response cycle with real HTTP semantics
-- Every **message consumer/handler**: test event processing with real or local message broker
-- Every **background job/worker**: test job execution with actual service dependencies
-- Every **middleware**: test request interception, auth guards, validation layers
+## Mock policy
 
-### What to Test
-| Priority | Test This | Example |
-|----------|-----------|---------|
-| 1 | Request/response cycle | POST /api/users → 201, returns created user |
-| 2 | Input validation | Missing required field → 400 with specific error |
-| 3 | Auth & authorization | No token → 401; wrong role → 403 |
-| 4 | Error handling | Invalid ID → 404; DB constraint → 409 |
-| 5 | Edge cases | Empty body, oversized payload, duplicate submission |
-
-### API Testing Patterns
-- Use the framework's built-in test client (e.g., Fastify `inject()`, Express `supertest`, FastAPI `TestClient`)
-- Test full request lifecycle — serialization, middleware, handler, response
-- Assert on status codes, response body structure, AND headers where relevant
-- Test pagination, filtering, and sorting with real DB rows
-
-### Message/Event Consumer Testing
-- Publish test events to a local broker (Kafka/Redpanda, RabbitMQ, Redis Streams)
-- Assert the consumer processes them correctly (DB writes, side effects)
-- Test error handling: malformed events, duplicate events, consumer restart
-
-### File Naming & Location
-- Name: `module-name.test.ts` or `test_module_name.py` — co-located or in `tests/` mirror
-- Group shared test helpers in `tests/helpers/` or `tests/factories/`
-<!-- END CONDITIONAL: BACKEND_ONLY -->
+Allowed mocks and fixtures cover only external systems not controlled by this repository, wall-clock injection through `TenantClock`, and deterministic failure injection at declared ports. Do not mock storage, evidence writing, artifact bytes, state machines, cohort planning, simulator/replay algorithms, or the real HTTP route under test.

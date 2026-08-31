@@ -1,0 +1,35 @@
+groups:
+  - name: edgefleet-safety
+    rules:
+      - alert: EdgeFleetNotReady
+        expr: edgefleet_up == 0 or absent(edgefleet_up)
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: Edge Fleet control plane is not ready
+          description: The control plane is unavailable or has not completed initialization.
+      - alert: EdgeFleetEvidenceChainFailure
+        expr: edgefleet_evidence_append_failures_total > 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: Edge Fleet evidence append failures detected
+          description: Immutable safety evidence is failing to commit; release promotion must be investigated.
+      - alert: EdgeFleetUnhealthyExposure
+        expr: edgefleet_release_unhealthy_exposure_devices > 0
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: Edge Fleet has unhealthy release exposure
+          description: One or more assignments are failed while a release remains observable.
+      - alert: EdgeFleetAdapterDeadLetters
+        expr: sum(edgefleet_outbox_rows{status="dead_letter"}) > 0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: Edge Fleet adapter deliveries are dead-lettered
+          description: Optional integration delivery is unavailable; local safety controls remain authoritative.

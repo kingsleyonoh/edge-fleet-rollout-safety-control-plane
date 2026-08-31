@@ -1,0 +1,41 @@
+# Version control and local agent evidence
+.git
+.pi
+.agent
+
+# Build and dependency artifacts
+build
+out
+CMakeFiles
+CMakeCache.txt
+vcpkg_installed
+.vcpkg-root
+node_modules
+playwright-report
+test-results
+coverage
+
+# Runtime data and secrets
+data
+local-secrets
+.env
+.env.*
+!.env.example
+logs
+tmp
+
+# Development-only files
+docs
+*.md
+!README.md
+package-lock.json
+playwright.config.ts
+tests/e2e
+
+# Editors and operating systems
+.vscode
+.idea
+*.swp
+*.swo
+.DS_Store
+Thumbs.db

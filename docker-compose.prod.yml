@@ -1,0 +1,92 @@
+# Later production profile. Core development and acceptance do not require Docker.
+services:
+  migrate:
+    profiles: ["production"]
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    command: ["migrate"]
+    env_file: [.env]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks: [edgefleet-internal]
+    restart: "no"
+
+  app:
+    profiles: ["production"]
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    container_name: edge-fleet-rollout-safety-control-plane
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp:size=256m,uid=10001,gid=10001,mode=0700
+    env_file: [.env]
+    environment:
+      EDGEFLEET_ENV: production
+      EDGEFLEET_HOST: 0.0.0.0
+      STORAGE_BACKEND: postgres
+      DATABASE_URL: ${DATABASE_URL}
+      ARTIFACT_STORE_PATH: /var/lib/edgefleet/artifacts
+      ARTIFACT_TEMP_PATH: /var/lib/edgefleet/tmp
+      TRACE_STORE_PATH: /var/lib/edgefleet/traces
+      EXPORT_STORE_PATH: /var/lib/edgefleet/exports
+    volumes:
+      - artifacts:/var/lib/edgefleet/artifacts
+      - artifact-tmp:/var/lib/edgefleet/tmp
+      - traces:/var/lib/edgefleet/traces
+      - exports:/var/lib/edgefleet/exports
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    networks: [edgefleet-internal, traefik-public]
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.edge-fleet-rollout-safety-control-plane.rule=Host(`edge-fleet-rollout-safety-control-plane.kingsleyonoh.com`)"
+      - "traefik.http.routers.edge-fleet-rollout-safety-control-plane.entrypoints=websecure"
+      - "traefik.http.routers.edge-fleet-rollout-safety-control-plane.tls.certresolver=letsencrypt"
+      - "traefik.http.services.edge-fleet-rollout-safety-control-plane.loadbalancer.server.port=8080"
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: "1.0"
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  postgres:
+    profiles: ["production"]
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-edgefleet}
+      POSTGRES_USER: ${POSTGRES_USER:-edgefleet}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+    networks: [edgefleet-internal]
+
+networks:
+  edgefleet-internal:
+    internal: true
+  traefik-public:
+    external: true
+
+volumes:
+  postgres-data:
+  artifacts:
+  artifact-tmp:
+  traces:
+  exports:
