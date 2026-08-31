@@ -26,6 +26,7 @@ vcpkg_installed/
 
 # Runtime data and generated evidence
 data/
+node_modules/
 local-secrets/
 logs/
 tmp/
@@ -52,28 +53,24 @@ tools/klevar-pi-package/
 Thumbs.db
 
 # AI Workflow System (proprietary, do not publish)
-# TRACKED DURING DEV. Run /prepare-public before making repo public.
-# .agent/workflows/
-# .agent/guides/
-# .agent/agents/
+.agent/workflows/
+.agent/guides/
+.agent/agents/
 .agent/.last-sync
 
 # Internal project planning
-# TRACKED DURING DEV. Run /prepare-public before making repo public.
-# docs/progress.md
-# docs/build-journal.md
-# docs/build-journal/
+docs/progress.md
+docs/build-journal/
 docs/architect_journal.md
-# docs/*PRD*.md
-# docs/*prd*.md
+docs/*PRD*.md
+docs/*prd*.md
 
 # Multi-agent platform context
 # CLAUDE.md / AGENTS.md / .cursorrules are generated thin pointers.
 CLAUDE.md
 AGENTS.md
 .cursorrules
-# TRACKED DURING DEV. Run /prepare-public before making repo public.
-# .claude/
+.claude/
 .claude/settings.local.json
 .claude/projects/
 .claude/ide/
